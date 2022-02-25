@@ -1,11 +1,10 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Expand Team Review Requests'
+description: 'When whitelisted teams are assigned to review, individually assign all of their members.'
+author: 'Avise Inc.'
 inputs:
-  milliseconds: # change this
+  teams:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'Comma-separated of teams to expand when assigned as reviewer of a PR.'
 runs:
   using: 'node12'
   main: 'dist/index.js'

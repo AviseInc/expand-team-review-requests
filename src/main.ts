@@ -1,16 +1,25 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import * as github from '@actions/github'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    // const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
+    // const octokit = github.getOctokit(GITHUB_TOKEN)
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const prBody = github.context.payload.pull_request?.body
 
-    core.setOutput('time', new Date().toTimeString())
+    if (prBody) {
+      core.info(prBody)
+    }
+
+    // const {data: pullRequest} = await octokit.rest.pulls.get({
+    //   owner: 'octokit',
+    //   repo: 'rest.js',
+    //   pull_number: 123,
+    //   mediaType: {
+    //     format: 'diff'
+    //   }
+    // })
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
