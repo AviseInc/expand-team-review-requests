@@ -20,7 +20,7 @@ async function run(): Promise<void> {
     core.info(`expansion team slugs: ${expansionTeamSlugs.join(' | ')}`)
 
     const requestedTeams: Team[] =
-      github.context.payload.requested_teams?.requested_teams || []
+      github.context.payload.pull_request?.requested_teams || []
 
     core.info(`requested teams: ${requestedTeams.map(t => t.slug).join(' | ')}`)
 

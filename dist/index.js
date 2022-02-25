@@ -48,7 +48,7 @@ function run() {
                 .split(',')
                 .map(s => s.trim());
             core.info(`expansion team slugs: ${expansionTeamSlugs.join(' | ')}`);
-            const requestedTeams = ((_a = github.context.payload.requested_teams) === null || _a === void 0 ? void 0 : _a.requested_teams) || [];
+            const requestedTeams = ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.requested_teams) || [];
             core.info(`requested teams: ${requestedTeams.map(t => t.slug).join(' | ')}`);
             requestedTeams.forEach(requestedTeam => {
                 if (expansionTeamSlugs.includes(requestedTeam.slug)) {
