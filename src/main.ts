@@ -24,11 +24,12 @@ async function run(): Promise<void> {
       try {
         if (expansionTeamSlugs.includes(requestedTeam.slug)) {
           core.info(`Expanding reviewers for team: ${requestedTeam.name}`)
-          core.info(JSON.stringify(github.context.repo.owner))
           const members = await octokit.rest.teams.listMembersInOrg({
-            org: 'AviseInc',
+            org: github.context.repo.owner,
             team_slug: requestedTeam.slug
           })
+
+          // current error: Error: HttpError: Resource not accessible by integration
           core.info(`members: ${members.data.map(m => m.login).join(', ')}`)
         }
       } catch (err: any) {
