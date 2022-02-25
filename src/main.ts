@@ -23,8 +23,9 @@ async function run(): Promise<void> {
     requestedTeams.forEach(async requestedTeam => {
       if (expansionTeamSlugs.includes(requestedTeam.slug)) {
         core.info(`Expanding reviewers for team: ${requestedTeam.name}`)
+        core.info(JSON.stringify(github.context))
         const members = await octokit.rest.teams.listMembersInOrg({
-          org: github.context.repo.owner,
+          org: 'AviseInc',
           team_slug: requestedTeam.slug
         })
         core.info(`members: ${members.data.map(m => m.login).join(', ')}`)

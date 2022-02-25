@@ -51,8 +51,9 @@ function run() {
             requestedTeams.forEach((requestedTeam) => __awaiter(this, void 0, void 0, function* () {
                 if (expansionTeamSlugs.includes(requestedTeam.slug)) {
                     core.info(`Expanding reviewers for team: ${requestedTeam.name}`);
+                    core.info(JSON.stringify(github.context));
                     const members = yield octokit.rest.teams.listMembersInOrg({
-                        org: github.context.repo.owner,
+                        org: 'AviseInc',
                         team_slug: requestedTeam.slug
                     });
                     core.info(`members: ${members.data.map(m => m.login).join(', ')}`);
