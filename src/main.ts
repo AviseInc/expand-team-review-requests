@@ -17,8 +17,12 @@ async function run(): Promise<void> {
       .split(',')
       .map(s => s.trim())
 
+    core.info(`expansion team slugs: ${expansionTeamSlugs.join(' | ')}`)
+
     const requestedTeams: Team[] =
       github.context.payload.requested_teams?.requested_teams || []
+
+    core.info(`requested teams: ${requestedTeams.map(t => t.slug).join(' | ')}`)
 
     requestedTeams.forEach(requestedTeam => {
       if (expansionTeamSlugs.includes(requestedTeam.slug)) {
