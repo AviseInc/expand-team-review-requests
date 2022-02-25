@@ -9,55 +9,30 @@ type Team = {
 
 async function run(): Promise<void> {
   try {
-    // const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
-    // const octokit = github.getOctokit(GITHUB_TOKEN)
+    const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
+    const octokit = github.getOctokit(GITHUB_TOKEN)
 
     const expansionTeamSlugs = core
       .getInput('team-slugs')
       .split(',')
       .map(s => s.trim())
 
-    core.info(`expansion team slugs: ${expansionTeamSlugs.join(' | ')}`)
-
     const requestedTeams: Team[] =
       github.context.payload.pull_request?.requested_teams || []
 
-    core.info(`requested teams: ${requestedTeams.map(t => t.slug).join(' | ')}`)
-
-    requestedTeams.forEach(requestedTeam => {
+    requestedTeams.forEach(async requestedTeam => {
       if (expansionTeamSlugs.includes(requestedTeam.slug)) {
         core.info(`Expanding reviewers for team: ${requestedTeam.name}`)
+        const members = await octokit.rest.teams.listMembersInOrg({
+          org: github.context.repo.owner,
+          team_slug: requestedTeam.slug
+        })
+        core.info(`members: ${members.data.map(m => m.login).join(', ')}`)
       }
     })
-
-    // const {data: pullRequest} = await octokit.rest.pulls.get({
-    //   owner: 'octokit',
-    //   repo: 'rest.js',
-    //   pull_number: 123,
-    //   mediaType: {
-    //     format: 'diff'
-    //   }
-    // })
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
 }
 
 run()
-
-// "requested_teams": [
-//   {
-//     "description": "just testing assigning this team to pr review for testing an action testing",
-//     "html_url": "https://github.com/orgs/AviseInc/teams/frank-s-action-test-team",
-//     "id": 5727922,
-//     "members_url": "https://api.github.com/organizations/70605335/team/5727922/members{/member}",
-//     "name": "Frank's Action Test Team",
-//     "node_id": "T_kwDOBDVaF84AV2ay",
-//     "parent": null,
-//     "permission": "pull",
-//     "privacy": "closed",
-//     "repositories_url": "https://api.github.com/organizations/70605335/team/5727922/repos",
-//     "slug": "frank-s-action-test-team",
-//     "url": "https://api.github.com/organizations/70605335/team/5727922"
-//   }
-// ],
