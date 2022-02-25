@@ -2,9 +2,9 @@ name: 'Expand Team Review Requests'
 description: 'When whitelisted teams are assigned to review, individually assign all of their members.'
 author: 'Avise Inc.'
 inputs:
-  teams:
+  team-slugs:
     required: true
-    description: 'Comma-separated of teams to expand when assigned as reviewer of a PR.'
+    description: 'Comma-separated of team slugs to expand when assigned as reviewer of a PR.'
 runs:
   using: 'node12'
   main: 'dist/index.js'
