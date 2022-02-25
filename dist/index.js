@@ -38,16 +38,21 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 function run() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
             // const octokit = github.getOctokit(GITHUB_TOKEN)
-            const teams = core.getInput('teams');
-            core.info(`teams: ${teams}`);
-            const pull_request = github.context.payload.pull_request;
-            if (pull_request) {
-                core.info(JSON.stringify(pull_request, undefined, 2));
-            }
+            const expansionTeamSlugs = core
+                .getInput('team-slugs')
+                .split(',')
+                .map(s => s.trim());
+            const requestedTeams = ((_a = github.context.payload.requested_teams) === null || _a === void 0 ? void 0 : _a.requested_teams) || [];
+            requestedTeams.forEach(requestedTeam => {
+                if (expansionTeamSlugs.includes(requestedTeam.slug)) {
+                    core.info(`Expanding reviewers for team: ${requestedTeam.name}`);
+                }
+            });
             // const {data: pullRequest} = await octokit.rest.pulls.get({
             //   owner: 'octokit',
             //   repo: 'rest.js',
@@ -64,6 +69,22 @@ function run() {
     });
 }
 run();
+// "requested_teams": [
+//   {
+//     "description": "just testing assigning this team to pr review for testing an action testing",
+//     "html_url": "https://github.com/orgs/AviseInc/teams/frank-s-action-test-team",
+//     "id": 5727922,
+//     "members_url": "https://api.github.com/organizations/70605335/team/5727922/members{/member}",
+//     "name": "Frank's Action Test Team",
+//     "node_id": "T_kwDOBDVaF84AV2ay",
+//     "parent": null,
+//     "permission": "pull",
+//     "privacy": "closed",
+//     "repositories_url": "https://api.github.com/organizations/70605335/team/5727922/repos",
+//     "slug": "frank-s-action-test-team",
+//     "url": "https://api.github.com/organizations/70605335/team/5727922"
+//   }
+// ],
 
 
 /***/ }),
