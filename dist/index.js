@@ -38,14 +38,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 function run() {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
             // const octokit = github.getOctokit(GITHUB_TOKEN)
-            const prBody = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.body;
-            if (prBody) {
-                core.info(prBody);
+            const teams = core.getInput('teams');
+            core.info(`teams: ${teams}`);
+            const pull_request = github.context.payload.pull_request;
+            if (pull_request) {
+                core.info(JSON.stringify(pull_request, undefined, 2));
             }
             // const {data: pullRequest} = await octokit.rest.pulls.get({
             //   owner: 'octokit',
