@@ -21,14 +21,18 @@ async function run(): Promise<void> {
       github.context.payload.pull_request?.requested_teams || []
 
     requestedTeams.forEach(async requestedTeam => {
-      if (expansionTeamSlugs.includes(requestedTeam.slug)) {
-        core.info(`Expanding reviewers for team: ${requestedTeam.name}`)
-        core.info(JSON.stringify(github.context))
-        const members = await octokit.rest.teams.listMembersInOrg({
-          org: 'AviseInc',
-          team_slug: requestedTeam.slug
-        })
-        core.info(`members: ${members.data.map(m => m.login).join(', ')}`)
+      try {
+        if (expansionTeamSlugs.includes(requestedTeam.slug)) {
+          core.info(`Expanding reviewers for team: ${requestedTeam.name}`)
+          core.info(JSON.stringify(github.context.repo.owner))
+          const members = await octokit.rest.teams.listMembersInOrg({
+            org: 'AviseInc',
+            team_slug: requestedTeam.slug
+          })
+          core.info(`members: ${members.data.map(m => m.login).join(', ')}`)
+        }
+      } catch (err: any) {
+        core.error(err)
       }
     })
   } catch (error) {

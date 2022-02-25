@@ -49,14 +49,19 @@ function run() {
                 .map(s => s.trim());
             const requestedTeams = ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.requested_teams) || [];
             requestedTeams.forEach((requestedTeam) => __awaiter(this, void 0, void 0, function* () {
-                if (expansionTeamSlugs.includes(requestedTeam.slug)) {
-                    core.info(`Expanding reviewers for team: ${requestedTeam.name}`);
-                    core.info(JSON.stringify(github.context));
-                    const members = yield octokit.rest.teams.listMembersInOrg({
-                        org: 'AviseInc',
-                        team_slug: requestedTeam.slug
-                    });
-                    core.info(`members: ${members.data.map(m => m.login).join(', ')}`);
+                try {
+                    if (expansionTeamSlugs.includes(requestedTeam.slug)) {
+                        core.info(`Expanding reviewers for team: ${requestedTeam.name}`);
+                        core.info(JSON.stringify(github.context.repo.owner));
+                        const members = yield octokit.rest.teams.listMembersInOrg({
+                            org: 'AviseInc',
+                            team_slug: requestedTeam.slug
+                        });
+                        core.info(`members: ${members.data.map(m => m.login).join(', ')}`);
+                    }
+                }
+                catch (err) {
+                    core.error(err);
                 }
             }));
         }
