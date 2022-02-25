@@ -31,6 +31,16 @@ async function run(): Promise<void> {
 
           // current error: Error: HttpError: Resource not accessible by integration
           core.info(`members: ${members.data.map(m => m.login).join(', ')}`)
+
+          /**
+           * TODO:
+           * - fix get team members error (is it an auth scope issue?)
+           * - send member logins to POST requested reviewers: https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+           * - remove team reviewer assignment with DELETE https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+           * - update README with example usage for other repos,
+           * - update avise-web PR to use commit hash
+           * - clean up my dummy test team
+           */
         }
       } catch (err: any) {
         core.error(err)
