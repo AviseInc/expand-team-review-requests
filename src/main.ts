@@ -5,11 +5,12 @@ async function run(): Promise<void> {
   try {
     // const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
     // const octokit = github.getOctokit(GITHUB_TOKEN)
+    const teams = core.getInput('teams')
+    core.info(`teams: ${teams}`)
 
-    const prBody = github.context.payload.pull_request?.body
-
-    if (prBody) {
-      core.info(prBody)
+    const pull_request = github.context.payload.pull_request
+    if (pull_request) {
+      core.info(JSON.stringify(pull_request, undefined, 2))
     }
 
     // const {data: pullRequest} = await octokit.rest.pulls.get({
