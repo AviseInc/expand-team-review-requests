@@ -32,16 +32,19 @@ async function run(): Promise<void> {
             team_slug: requestedTeam.slug
           })
 
-          core.info(`members: ${members.data.map(m => m.login).join(', ')}`)
-          core.info(JSON.stringify(github.context.repo, undefined, 2))
-          core.info(JSON.stringify(github.context.issue, undefined, 2))
+          core.info(github.context.payload.pull_request?.author)
+          core.info(
+            JSON.stringify(github.context.payload.pull_request, undefined, 2)
+          )
           await octokit.rest.pulls.requestReviewers({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
+            owner: github.context.issue.owner,
+            repo: github.context.issue.repo,
             pull_number: github.context.issue.number,
             reviewers: members.data
               .map(m => m.login)
-              .filter(login => login !== github.context.issue.owner)
+              .filter(
+                login => login !== github.context.payload.pull_request?.author
+              )
           })
 
           /**
