@@ -42,7 +42,8 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
-            const octokit = github.getOctokit(GITHUB_TOKEN);
+            const READ_ORG_PAT = process.env.READ_ORG_PAT || '';
+            const octokit = github.getOctokit(READ_ORG_PAT);
             const expansionTeamSlugs = core
                 .getInput('team-slugs')
                 .split(',')
@@ -52,12 +53,21 @@ function run() {
                 try {
                     if (expansionTeamSlugs.includes(requestedTeam.slug)) {
                         core.info(`Expanding reviewers for team: ${requestedTeam.name}`);
-                        core.info(JSON.stringify(github.context.repo.owner));
                         const members = yield octokit.rest.teams.listMembersInOrg({
-                            org: 'AviseInc',
+                            org: github.context.repo.owner,
                             team_slug: requestedTeam.slug
                         });
+                        // current error: Error: HttpError: Resource not accessible by integration
                         core.info(`members: ${members.data.map(m => m.login).join(', ')}`);
+                        /**
+                         * TODO:
+                         * - fix get team members error (is it an auth scope issue?)
+                         * - send member logins to POST requested reviewers: https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+                         * - remove team reviewer assignment with DELETE https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+                         * - update README with example usage for other repos,
+                         * - update avise-web PR to use commit hash
+                         * - clean up my dummy test team
+                         */
                     }
                 }
                 catch (err) {

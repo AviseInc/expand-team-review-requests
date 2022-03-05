@@ -10,7 +10,9 @@ type Team = {
 async function run(): Promise<void> {
   try {
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
-    const octokit = github.getOctokit(GITHUB_TOKEN)
+    const READ_ORG_PAT = process.env.READ_ORG_PAT || ''
+
+    const octokit = github.getOctokit(READ_ORG_PAT)
 
     const expansionTeamSlugs = core
       .getInput('team-slugs')
