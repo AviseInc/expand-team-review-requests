@@ -22,17 +22,16 @@ async function run(): Promise<void> {
     core.info(`Expanding Team Slugs: ${teamSlugsToExpand.join(' ')}`)
 
     // GATHER PULL REQUEST CONTEXT
+    const prAuthorLogin = github.context.payload.pull_request?.user.login
     const currentlyRequestedTeams: string[] =
       github.context.payload.pull_request?.requested_teams.map(
         (t: any) => t.slug
       ) || []
-    core.info(`Currently Requested Teams: ${currentlyRequestedTeams.join(' ')}`)
+    core.info(`Requested Teams: ${currentlyRequestedTeams.join(' ')}`)
     const currentlyRequestedReviewers: string[] = (
       github.context.payload.pull_request?.requested_reviewers || []
     ).map((r: any) => r.login)
-    core.info(
-      `Currently Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`
-    )
+    core.info(`Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`)
 
     // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
     const teamMembers: string[][] = await Promise.all(
@@ -47,29 +46,20 @@ async function run(): Promise<void> {
         })
     )
     const expansionReviewerLogins: string[] = uniq(flatten(teamMembers))
-    core.info(
-      `Expansion Reviewers to Add: ${currentlyRequestedReviewers.join(' ')}`
-    )
+    core.info(`Team Members to Add: ${expansionReviewerLogins.join(' ')}`)
 
     // PREPARE NEW REVIEWER PAYLOAD
-    const reviewers: string[] = uniq([
-      ...currentlyRequestedReviewers,
-      ...expansionReviewerLogins
-    ])
     const teamReviewers: string[] = currentlyRequestedTeams.filter(
       t => !teamSlugsToExpand.includes(t)
     )
+    const reviewers: string[] = uniq([
+      ...currentlyRequestedReviewers,
+      ...expansionReviewerLogins
+    ]).filter(login => login !== prAuthorLogin)
+    core.info(`Modified Teams: ${teamReviewers.join('')}`)
+    core.info(`Modified Reviewers: ${reviewers.join('')}`)
 
-    /**
-     * TODO:
-     * x fix get team members error (is it an auth scope issue?)
-     * x send member logins to POST requested reviewers: https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
-     * x remove team reviewer assignment with DELETE https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
-     * - update README with example usage for other repos,
-     * - update avise-web PR to use commit hash
-     * - clean up my dummy test team
-     */
-
+    // UPDATE PR REVIEWERS
     await octokit.rest.pulls.requestReviewers({
       owner: github.context.issue.owner,
       repo: github.context.issue.repo,
@@ -77,9 +67,20 @@ async function run(): Promise<void> {
       reviewers: reviewers,
       team_reviewers: teamReviewers
     })
+    core.info(`SUCCESS`)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
 }
 
 run()
+
+/**
+ * TODO:
+ * x fix get team members error (is it an auth scope issue?)
+ * x send member logins to POST requested reviewers: https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+ * x remove team reviewer assignment with DELETE https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+ * - update README with example usage for other repos,
+ * - update avise-web PR to use commit hash
+ * - clean up my dummy test team
+ */
