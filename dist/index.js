@@ -42,8 +42,9 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
-            const READ_ORG_PAT = process.env.READ_ORG_PAT || '';
             const octokit = github.getOctokit(GITHUB_TOKEN);
+            const READ_ORG_PAT = process.env.READ_ORG_PAT || '';
+            const orgReadOctoKit = github.getOctokit(READ_ORG_PAT);
             const expansionTeamSlugs = core
                 .getInput('team-slugs')
                 .split(',')
@@ -53,18 +54,20 @@ function run() {
                 try {
                     if (expansionTeamSlugs.includes(requestedTeam.slug)) {
                         core.info(`Expanding reviewers for team: ${requestedTeam.name}`);
-                        const members = yield github
-                            .getOctokit(READ_ORG_PAT)
-                            .rest.teams.listMembersInOrg({
+                        const members = yield orgReadOctoKit.rest.teams.listMembersInOrg({
                             org: github.context.repo.owner,
                             team_slug: requestedTeam.slug
                         });
                         core.info(`members: ${members.data.map(m => m.login).join(', ')}`);
+                        core.info(JSON.stringify(github.context.repo, undefined, 2));
+                        core.info(JSON.stringify(github.context.issue, undefined, 2));
                         yield octokit.rest.pulls.requestReviewers({
                             owner: github.context.repo.owner,
                             repo: github.context.repo.repo,
                             pull_number: github.context.issue.number,
-                            reviewers: members.data.map(m => m.login)
+                            reviewers: members.data
+                                .map(m => m.login)
+                                .filter(login => login !== github.context.issue.owner)
                         });
                         /**
                          * TODO:
