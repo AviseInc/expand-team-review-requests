@@ -28,15 +28,16 @@ async function run(): Promise<void> {
       ) || []
     core.info(`Currently Requested Teams: ${currentlyRequestedTeams.join(' ')}`)
 
+    core.info(Object.keys(github.context.payload.pull_request || {}).join(', '))
     core.info(
       JSON.stringify(
-        github.context.payload.pull_request?.requested_reviewers,
+        github.context.payload.pull_request?.requested_reviews,
         undefined,
         2
       )
     )
     const currentlyRequestedReviewers: string[] =
-      github.context.payload.pull_request?.requested_reviewers.map(
+      github.context.payload.pull_request?.requested_reviews.map(
         (r: any) => r.login
       ) || []
     core.info(

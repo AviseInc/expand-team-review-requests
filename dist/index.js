@@ -55,8 +55,9 @@ function run() {
             // GATHER PULL REQUEST CONTEXT
             const currentlyRequestedTeams = ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.requested_teams.map((t) => t.slug)) || [];
             core.info(`Currently Requested Teams: ${currentlyRequestedTeams.join(' ')}`);
-            core.info(JSON.stringify((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_reviewers, undefined, 2));
-            const currentlyRequestedReviewers = ((_c = github.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.requested_reviewers.map((r) => r.login)) || [];
+            core.info(Object.keys(github.context.payload.pull_request || {}).join(', '));
+            core.info(JSON.stringify((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_reviews, undefined, 2));
+            const currentlyRequestedReviewers = ((_c = github.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.requested_reviews.map((r) => r.login)) || [];
             core.info(`Currently Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`);
             // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
             const teamMembers = yield Promise.all(currentlyRequestedTeams
