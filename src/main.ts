@@ -31,8 +31,13 @@ async function run(): Promise<void> {
             team_slug: requestedTeam.slug
           })
 
-          // current error: Error: HttpError: Resource not accessible by integration
           core.info(`members: ${members.data.map(m => m.login).join(', ')}`)
+          await octokit.rest.pulls.requestReviewers({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            pull_number: github.context.issue.number,
+            reviewers: members.data.map(m => m.login)
+          })
 
           /**
            * TODO:
