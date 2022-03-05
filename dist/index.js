@@ -95,15 +95,6 @@ function run() {
     });
 }
 run();
-/**
- * TODO:
- * x fix get team members error (is it an auth scope issue?)
- * x send member logins to POST requested reviewers: https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
- * x remove team reviewer assignment with DELETE https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
- * - update README with example usage for other repos,
- * - update avise-web PR to use commit hash
- * - clean up my dummy test team
- */
 
 
 /***/ }),
