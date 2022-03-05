@@ -39,7 +39,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const lodash_1 = __nccwpck_require__(250);
 function run() {
-    var _a, _b, _c;
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // GATHER ACTION ARGUMENTS
@@ -55,9 +55,7 @@ function run() {
             // GATHER PULL REQUEST CONTEXT
             const currentlyRequestedTeams = ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.requested_teams.map((t) => t.slug)) || [];
             core.info(`Currently Requested Teams: ${currentlyRequestedTeams.join(' ')}`);
-            core.info(Object.keys(github.context.payload.pull_request || {}).join(', '));
-            core.info(JSON.stringify((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_reviews, undefined, 2));
-            const currentlyRequestedReviewers = ((_c = github.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.requested_reviews.map((r) => r.login)) || [];
+            const currentlyRequestedReviewers = (((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_reviewers) || []).map((r) => r.login);
             core.info(`Currently Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`);
             // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
             const teamMembers = yield Promise.all(currentlyRequestedTeams

@@ -27,19 +27,9 @@ async function run(): Promise<void> {
         (t: any) => t.slug
       ) || []
     core.info(`Currently Requested Teams: ${currentlyRequestedTeams.join(' ')}`)
-
-    core.info(Object.keys(github.context.payload.pull_request || {}).join(', '))
-    core.info(
-      JSON.stringify(
-        github.context.payload.pull_request?.requested_reviews,
-        undefined,
-        2
-      )
-    )
-    const currentlyRequestedReviewers: string[] =
-      github.context.payload.pull_request?.requested_reviews.map(
-        (r: any) => r.login
-      ) || []
+    const currentlyRequestedReviewers: string[] = (
+      github.context.payload.pull_request?.requested_reviewers || []
+    ).map((r: any) => r.login)
     core.info(
       `Currently Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`
     )
