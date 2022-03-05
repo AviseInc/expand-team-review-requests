@@ -43,7 +43,7 @@ function run() {
         try {
             const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
             const READ_ORG_PAT = process.env.READ_ORG_PAT || '';
-            const octokit = github.getOctokit(READ_ORG_PAT);
+            const octokit = github.getOctokit(GITHUB_TOKEN);
             const expansionTeamSlugs = core
                 .getInput('team-slugs')
                 .split(',')
@@ -53,7 +53,9 @@ function run() {
                 try {
                     if (expansionTeamSlugs.includes(requestedTeam.slug)) {
                         core.info(`Expanding reviewers for team: ${requestedTeam.name}`);
-                        const members = yield octokit.rest.teams.listMembersInOrg({
+                        const members = yield github
+                            .getOctokit(READ_ORG_PAT)
+                            .rest.teams.listMembersInOrg({
                             org: github.context.repo.owner,
                             team_slug: requestedTeam.slug
                         });
