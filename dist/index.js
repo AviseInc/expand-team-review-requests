@@ -39,7 +39,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const lodash_1 = __nccwpck_require__(250);
 function run() {
-    var _a, _b;
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // GATHER ACTION ARGUMENTS
@@ -53,10 +53,11 @@ function run() {
                 .map(s => s.trim());
             core.info(`Expanding Team Slugs: ${teamSlugsToExpand.join(' ')}`);
             // GATHER PULL REQUEST CONTEXT
-            const currentlyRequestedTeams = ((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.requested_teams.map((t) => t.slug)) || [];
-            core.info(`Currently Requested Teams: ${currentlyRequestedTeams.join(' ')}`);
-            const currentlyRequestedReviewers = (((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_reviewers) || []).map((r) => r.login);
-            core.info(`Currently Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`);
+            const prAuthorLogin = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.user.login;
+            const currentlyRequestedTeams = ((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_teams.map((t) => t.slug)) || [];
+            core.info(`Requested Teams: ${currentlyRequestedTeams.join(' ')}`);
+            const currentlyRequestedReviewers = (((_c = github.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.requested_reviewers) || []).map((r) => r.login);
+            core.info(`Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`);
             // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
             const teamMembers = yield Promise.all(currentlyRequestedTeams
                 .filter(team => teamSlugsToExpand.includes(team))
@@ -68,22 +69,16 @@ function run() {
                 return members.data.map(m => m.login);
             })));
             const expansionReviewerLogins = (0, lodash_1.uniq)((0, lodash_1.flatten)(teamMembers));
-            core.info(`Expansion Reviewers to Add: ${currentlyRequestedReviewers.join(' ')}`);
+            core.info(`Team Members to Add: ${expansionReviewerLogins.join(' ')}`);
             // PREPARE NEW REVIEWER PAYLOAD
+            const teamReviewers = currentlyRequestedTeams.filter(t => !teamSlugsToExpand.includes(t));
             const reviewers = (0, lodash_1.uniq)([
                 ...currentlyRequestedReviewers,
                 ...expansionReviewerLogins
-            ]);
-            const teamReviewers = currentlyRequestedTeams.filter(t => !teamSlugsToExpand.includes(t));
-            /**
-             * TODO:
-             * x fix get team members error (is it an auth scope issue?)
-             * x send member logins to POST requested reviewers: https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
-             * x remove team reviewer assignment with DELETE https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
-             * - update README with example usage for other repos,
-             * - update avise-web PR to use commit hash
-             * - clean up my dummy test team
-             */
+            ]).filter(login => login !== prAuthorLogin);
+            core.info(`Modified Teams: ${teamReviewers.join('')}`);
+            core.info(`Modified Reviewers: ${reviewers.join('')}`);
+            // UPDATE PR REVIEWERS
             yield octokit.rest.pulls.requestReviewers({
                 owner: github.context.issue.owner,
                 repo: github.context.issue.repo,
@@ -91,6 +86,7 @@ function run() {
                 reviewers: reviewers,
                 team_reviewers: teamReviewers
             });
+            core.info(`SUCCESS`);
         }
         catch (error) {
             if (error instanceof Error)
@@ -99,6 +95,15 @@ function run() {
     });
 }
 run();
+/**
+ * TODO:
+ * x fix get team members error (is it an auth scope issue?)
+ * x send member logins to POST requested reviewers: https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+ * x remove team reviewer assignment with DELETE https://docs.github.com/en/rest/reference/pulls#request-reviewers-for-a-pull-request
+ * - update README with example usage for other repos,
+ * - update avise-web PR to use commit hash
+ * - clean up my dummy test team
+ */
 
 
 /***/ }),
