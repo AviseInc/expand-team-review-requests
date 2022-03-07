@@ -76,8 +76,8 @@ function run() {
                 ...currentlyRequestedReviewers,
                 ...expansionReviewerLogins
             ]).filter(login => login !== prAuthorLogin);
-            core.info(`Modified Teams: ${teamReviewers.join('')}`);
-            core.info(`Modified Reviewers: ${reviewers.join('')}`);
+            core.info(`Modified Teams: ${teamReviewers.join(' ')}`);
+            core.info(`Modified Reviewers: ${reviewers.join(' ')}`);
             // UPDATE PR REVIEWERS
             yield octokit.rest.pulls.requestReviewers({
                 owner: github.context.issue.owner,

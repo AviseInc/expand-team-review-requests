@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Expand Team Review Requests
-        uses: AviseInc/expand-team-review-requests@main
+        uses: AviseInc/expand-team-review-requests@v1
         with:
           team-slugs: some-team-slug-1, some-team-slug-2
         env:

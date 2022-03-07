@@ -50,8 +50,8 @@ async function run(): Promise<void> {
       ...currentlyRequestedReviewers,
       ...expansionReviewerLogins
     ]).filter(login => login !== prAuthorLogin)
-    core.info(`Modified Teams: ${teamReviewers.join('')}`)
-    core.info(`Modified Reviewers: ${reviewers.join('')}`)
+    core.info(`Modified Teams: ${teamReviewers.join(' ')}`)
+    core.info(`Modified Reviewers: ${reviewers.join(' ')}`)
 
     // UPDATE PR REVIEWERS
     await octokit.rest.pulls.requestReviewers({
