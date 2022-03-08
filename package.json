@@ -29,7 +29,7 @@
   "devDependencies": {
     "@types/lodash": "4.14.179",
     "@types/node": "^16.10.5",
-    "@typescript-eslint/parser": "^5.8.1",
+    "@typescript-eslint/parser": "^5.14.0",
     "@vercel/ncc": "^0.31.1",
     "js-yaml": "^4.1.0",
     "lodash": "4.17.21",
