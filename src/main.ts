@@ -4,6 +4,10 @@ import {flatten, uniq} from 'lodash'
 
 async function run(): Promise<void> {
   try {
+    if (github.context.payload.pull_request === undefined) {
+      return
+    }
+
     // GATHER ACTION ARGUMENTS
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
     const octokit = github.getOctokit(GITHUB_TOKEN)
@@ -16,24 +20,28 @@ async function run(): Promise<void> {
     core.info(`Expanding Team Slugs: ${teamSlugsToExpand.join(' ')}`)
 
     // GATHER PULL REQUEST CONTEXT
-    const prAuthorLogin = github.context.payload.pull_request?.user.login
+    const prAuthorLogin = github.context.payload.pull_request.user.login
     const currentRequestedTeams: string[] =
-      github.context.payload.pull_request?.requested_teams.map(
+      github.context.payload.pull_request.requested_teams.map(
         (t: any) => t.slug
-      ) || []
+      )
     core.info(`Requested Teams: ${currentRequestedTeams.join(' ')}`)
-    const currentRequestedReviewers: string[] = (
-      github.context.payload.pull_request?.requested_reviewers || []
-    ).map((r: any) => r.login)
+    const currentRequestedReviewers: string[] =
+      github.context.payload.pull_request.requested_reviewers.map(
+        (r: any) => r.login
+      )
     core.info(`Requested Reviewers: ${currentRequestedReviewers.join(' ')}`)
 
-    core.info('---')
-    core.info(Object.keys(github.context.payload.pull_request || {}).join(', '))
-    core.info(JSON.stringify(github.context.payload.pull_request, undefined, 2))
-    core.info('---')
-
+    const reviews = await octokit.rest.pulls.listReviews({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      pull_number: github.context.payload.pull_request.number
+    })
+    const submittedReviewers: string[] = reviews.data
+      .filter(r => r.user !== null)
+      .map(r => r.user!.login)
     const currentSubmittedReviewers: string[] = []
-    core.info(`Submitted Reviewers: ${currentRequestedReviewers.join(' ')}`)
+    core.info(`Submitted Reviewers: ${submittedReviewers.join(' ')}`)
 
     // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
     const teamMembers: string[][] = await Promise.all(
@@ -60,6 +68,7 @@ async function run(): Promise<void> {
     ])
       .filter(login => login !== prAuthorLogin)
       .filter(login => !currentSubmittedReviewers.includes(login))
+      .filter(login => !submittedReviewers.includes(login))
     core.info(`Modified Teams: ${teamReviewers.join(' ')}`)
     core.info(`Modified Reviewers: ${reviewers.join(' ')}`)
 

@@ -39,9 +39,11 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const lodash_1 = __nccwpck_require__(250);
 function run() {
-    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            if (github.context.payload.pull_request === undefined) {
+                return;
+            }
             // GATHER ACTION ARGUMENTS
             const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
             const octokit = github.getOctokit(GITHUB_TOKEN);
@@ -53,17 +55,21 @@ function run() {
                 .map(s => s.trim());
             core.info(`Expanding Team Slugs: ${teamSlugsToExpand.join(' ')}`);
             // GATHER PULL REQUEST CONTEXT
-            const prAuthorLogin = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.user.login;
-            const currentRequestedTeams = ((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_teams.map((t) => t.slug)) || [];
+            const prAuthorLogin = github.context.payload.pull_request.user.login;
+            const currentRequestedTeams = github.context.payload.pull_request.requested_teams.map((t) => t.slug);
             core.info(`Requested Teams: ${currentRequestedTeams.join(' ')}`);
-            const currentRequestedReviewers = (((_c = github.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.requested_reviewers) || []).map((r) => r.login);
+            const currentRequestedReviewers = github.context.payload.pull_request.requested_reviewers.map((r) => r.login);
             core.info(`Requested Reviewers: ${currentRequestedReviewers.join(' ')}`);
-            core.info('---');
-            core.info(Object.keys(github.context.payload.pull_request || {}).join(', '));
-            core.info(JSON.stringify(github.context.payload.pull_request, undefined, 2));
-            core.info('---');
+            const reviews = yield octokit.rest.pulls.listReviews({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                pull_number: github.context.payload.pull_request.number
+            });
+            const submittedReviewers = reviews.data
+                .filter(r => r.user !== null)
+                .map(r => r.user.login);
             const currentSubmittedReviewers = [];
-            core.info(`Submitted Reviewers: ${currentRequestedReviewers.join(' ')}`);
+            core.info(`Submitted Reviewers: ${submittedReviewers.join(' ')}`);
             // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
             const teamMembers = yield Promise.all(currentRequestedTeams
                 .filter(team => teamSlugsToExpand.includes(team))
@@ -83,7 +89,8 @@ function run() {
                 ...expansionReviewerLogins
             ])
                 .filter(login => login !== prAuthorLogin)
-                .filter(login => !currentSubmittedReviewers.includes(login));
+                .filter(login => !currentSubmittedReviewers.includes(login))
+                .filter(login => !submittedReviewers.includes(login));
             core.info(`Modified Teams: ${teamReviewers.join(' ')}`);
             core.info(`Modified Reviewers: ${reviewers.join(' ')}`);
             // UPDATE PR REVIEWERS
