@@ -38,6 +38,13 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const lodash_1 = __nccwpck_require__(250);
+const log = (lineOne, lineTwo) => {
+    core.info(lineOne);
+    if (lineTwo) {
+        core.info(lineTwo);
+    }
+    core.info('');
+};
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -53,13 +60,13 @@ function run() {
                 .getInput('team-slugs')
                 .split(',')
                 .map(s => s.trim());
-            core.info(`Expanding Team Slugs: ${teamSlugsToExpand.join(' ')}`);
+            log('Action is configured to expand these teams:', teamSlugsToExpand.join(', '));
             // GATHER PULL REQUEST CONTEXT
             const prAuthorLogin = github.context.payload.pull_request.user.login;
             const currentRequestedTeams = github.context.payload.pull_request.requested_teams.map((t) => t.slug);
-            core.info(`Requested Teams: ${currentRequestedTeams.join(' ')}`);
+            log('PR has requested reviews from these teams:', currentRequestedTeams.join(', '));
             const currentRequestedReviewers = github.context.payload.pull_request.requested_reviewers.map((r) => r.login);
-            core.info(`Requested Reviewers: ${currentRequestedReviewers.join(' ')}`);
+            log('PR has requested reviews from these users:', currentRequestedReviewers.join(', '));
             const reviews = yield octokit.rest.pulls.listReviews({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
@@ -69,7 +76,7 @@ function run() {
                 .filter(r => r.user !== null)
                 .map(r => r.user.login);
             const currentSubmittedReviewers = [];
-            core.info(`Submitted Reviewers: ${submittedReviewers.join(' ')}`);
+            log('PR already has reviews from these users:', currentSubmittedReviewers.join(', '));
             // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
             const teamMembers = yield Promise.all(currentRequestedTeams
                 .filter(team => teamSlugsToExpand.includes(team))
@@ -81,7 +88,7 @@ function run() {
                 return members.data.map(m => m.login);
             })));
             const expansionReviewerLogins = (0, lodash_1.uniq)((0, lodash_1.flatten)(teamMembers));
-            core.info(`Team Members to Add: ${expansionReviewerLogins.join(' ')}`);
+            log('All team members from requested teams:', expansionReviewerLogins.join(', '));
             // PREPARE NEW REVIEWER PAYLOAD
             const teamReviewers = currentRequestedTeams.filter(t => !teamSlugsToExpand.includes(t));
             const reviewers = (0, lodash_1.uniq)([
@@ -91,8 +98,8 @@ function run() {
                 .filter(login => login !== prAuthorLogin)
                 .filter(login => !currentSubmittedReviewers.includes(login))
                 .filter(login => !submittedReviewers.includes(login));
-            core.info(`Modified Teams: ${teamReviewers.join(' ')}`);
-            core.info(`Modified Reviewers: ${reviewers.join(' ')}`);
+            log('Action will request reviews from these teams:', teamReviewers.join(', '));
+            log('Action will request reviews from these users:', reviewers.join(', '));
             // UPDATE PR REVIEWERS
             yield octokit.rest.pulls.requestReviewers({
                 owner: github.context.issue.owner,
@@ -101,7 +108,7 @@ function run() {
                 reviewers: reviewers,
                 team_reviewers: teamReviewers
             });
-            core.info(`SUCCESS`);
+            log(`🔮 SUCCESS 🍡`);
         }
         catch (error) {
             if (error instanceof Error)
