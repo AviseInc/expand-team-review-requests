@@ -2,8 +2,20 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {flatten, uniq} from 'lodash'
 
+const log = (lineOne: string, lineTwo?: string) => {
+  core.info(lineOne)
+  if (lineTwo) {
+    core.info(lineTwo)
+  }
+  core.info('')
+}
+
 async function run(): Promise<void> {
   try {
+    if (github.context.payload.pull_request === undefined) {
+      return
+    }
+
     // GATHER ACTION ARGUMENTS
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
     const octokit = github.getOctokit(GITHUB_TOKEN)
@@ -13,23 +25,48 @@ async function run(): Promise<void> {
       .getInput('team-slugs')
       .split(',')
       .map(s => s.trim())
-    core.info(`Expanding Team Slugs: ${teamSlugsToExpand.join(' ')}`)
+    log(
+      'Action is configured to expand these teams:',
+      teamSlugsToExpand.join(', ')
+    )
 
     // GATHER PULL REQUEST CONTEXT
-    const prAuthorLogin = github.context.payload.pull_request?.user.login
-    const currentlyRequestedTeams: string[] =
-      github.context.payload.pull_request?.requested_teams.map(
+    const prAuthorLogin = github.context.payload.pull_request.user.login
+    const currentRequestedTeams: string[] =
+      github.context.payload.pull_request.requested_teams.map(
         (t: any) => t.slug
-      ) || []
-    core.info(`Requested Teams: ${currentlyRequestedTeams.join(' ')}`)
-    const currentlyRequestedReviewers: string[] = (
-      github.context.payload.pull_request?.requested_reviewers || []
-    ).map((r: any) => r.login)
-    core.info(`Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`)
+      )
+    log(
+      'PR has requested reviews from these teams:',
+      currentRequestedTeams.join(', ')
+    )
+
+    const currentRequestedReviewers: string[] =
+      github.context.payload.pull_request.requested_reviewers.map(
+        (r: any) => r.login
+      )
+    log(
+      'PR has requested reviews from these users:',
+      currentRequestedReviewers.join(', ')
+    )
+
+    const reviews = await octokit.rest.pulls.listReviews({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      pull_number: github.context.payload.pull_request.number
+    })
+    const submittedReviewers: string[] = reviews.data
+      .filter(r => r.user !== null)
+      .map(r => r.user!.login)
+    const currentSubmittedReviewers: string[] = []
+    log(
+      'PR already has reviews from these users:',
+      currentSubmittedReviewers.join(', ')
+    )
 
     // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
     const teamMembers: string[][] = await Promise.all(
-      currentlyRequestedTeams
+      currentRequestedTeams
         .filter(team => teamSlugsToExpand.includes(team))
         .map(async team => {
           const members = await orgReadOctoKit.rest.teams.listMembersInOrg({
@@ -40,18 +77,27 @@ async function run(): Promise<void> {
         })
     )
     const expansionReviewerLogins: string[] = uniq(flatten(teamMembers))
-    core.info(`Team Members to Add: ${expansionReviewerLogins.join(' ')}`)
+    log(
+      'All team members from requested teams:',
+      expansionReviewerLogins.join(', ')
+    )
 
     // PREPARE NEW REVIEWER PAYLOAD
-    const teamReviewers: string[] = currentlyRequestedTeams.filter(
+    const teamReviewers: string[] = currentRequestedTeams.filter(
       t => !teamSlugsToExpand.includes(t)
     )
     const reviewers: string[] = uniq([
-      ...currentlyRequestedReviewers,
+      ...currentRequestedReviewers,
       ...expansionReviewerLogins
-    ]).filter(login => login !== prAuthorLogin)
-    core.info(`Modified Teams: ${teamReviewers.join(' ')}`)
-    core.info(`Modified Reviewers: ${reviewers.join(' ')}`)
+    ])
+      .filter(login => login !== prAuthorLogin)
+      .filter(login => !currentSubmittedReviewers.includes(login))
+      .filter(login => !submittedReviewers.includes(login))
+    log(
+      'Action will request reviews from these teams:',
+      teamReviewers.join(', ')
+    )
+    log('Action will request reviews from these users:', reviewers.join(', '))
 
     // UPDATE PR REVIEWERS
     await octokit.rest.pulls.requestReviewers({
@@ -61,7 +107,8 @@ async function run(): Promise<void> {
       reviewers: reviewers,
       team_reviewers: teamReviewers
     })
-    core.info(`SUCCESS`)
+
+    log(`🔮 SUCCESS 🍡`)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
