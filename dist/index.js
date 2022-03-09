@@ -54,12 +54,18 @@ function run() {
             core.info(`Expanding Team Slugs: ${teamSlugsToExpand.join(' ')}`);
             // GATHER PULL REQUEST CONTEXT
             const prAuthorLogin = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.user.login;
-            const currentlyRequestedTeams = ((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_teams.map((t) => t.slug)) || [];
-            core.info(`Requested Teams: ${currentlyRequestedTeams.join(' ')}`);
-            const currentlyRequestedReviewers = (((_c = github.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.requested_reviewers) || []).map((r) => r.login);
-            core.info(`Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`);
+            const currentRequestedTeams = ((_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.requested_teams.map((t) => t.slug)) || [];
+            core.info(`Requested Teams: ${currentRequestedTeams.join(' ')}`);
+            const currentRequestedReviewers = (((_c = github.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.requested_reviewers) || []).map((r) => r.login);
+            core.info(`Requested Reviewers: ${currentRequestedReviewers.join(' ')}`);
+            core.info('---');
+            core.info(Object.keys(github.context.payload.pull_request || {}).join(', '));
+            core.info(JSON.stringify(github.context.payload.pull_request, undefined, 2));
+            core.info('---');
+            const currentSubmittedReviewers = [];
+            core.info(`Submitted Reviewers: ${currentRequestedReviewers.join(' ')}`);
             // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
-            const teamMembers = yield Promise.all(currentlyRequestedTeams
+            const teamMembers = yield Promise.all(currentRequestedTeams
                 .filter(team => teamSlugsToExpand.includes(team))
                 .map((team) => __awaiter(this, void 0, void 0, function* () {
                 const members = yield orgReadOctoKit.rest.teams.listMembersInOrg({
@@ -71,11 +77,13 @@ function run() {
             const expansionReviewerLogins = (0, lodash_1.uniq)((0, lodash_1.flatten)(teamMembers));
             core.info(`Team Members to Add: ${expansionReviewerLogins.join(' ')}`);
             // PREPARE NEW REVIEWER PAYLOAD
-            const teamReviewers = currentlyRequestedTeams.filter(t => !teamSlugsToExpand.includes(t));
+            const teamReviewers = currentRequestedTeams.filter(t => !teamSlugsToExpand.includes(t));
             const reviewers = (0, lodash_1.uniq)([
-                ...currentlyRequestedReviewers,
+                ...currentRequestedReviewers,
                 ...expansionReviewerLogins
-            ]).filter(login => login !== prAuthorLogin);
+            ])
+                .filter(login => login !== prAuthorLogin)
+                .filter(login => !currentSubmittedReviewers.includes(login));
             core.info(`Modified Teams: ${teamReviewers.join(' ')}`);
             core.info(`Modified Reviewers: ${reviewers.join(' ')}`);
             // UPDATE PR REVIEWERS

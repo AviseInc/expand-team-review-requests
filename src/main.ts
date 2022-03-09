@@ -17,19 +17,27 @@ async function run(): Promise<void> {
 
     // GATHER PULL REQUEST CONTEXT
     const prAuthorLogin = github.context.payload.pull_request?.user.login
-    const currentlyRequestedTeams: string[] =
+    const currentRequestedTeams: string[] =
       github.context.payload.pull_request?.requested_teams.map(
         (t: any) => t.slug
       ) || []
-    core.info(`Requested Teams: ${currentlyRequestedTeams.join(' ')}`)
-    const currentlyRequestedReviewers: string[] = (
+    core.info(`Requested Teams: ${currentRequestedTeams.join(' ')}`)
+    const currentRequestedReviewers: string[] = (
       github.context.payload.pull_request?.requested_reviewers || []
     ).map((r: any) => r.login)
-    core.info(`Requested Reviewers: ${currentlyRequestedReviewers.join(' ')}`)
+    core.info(`Requested Reviewers: ${currentRequestedReviewers.join(' ')}`)
+
+    core.info('---')
+    core.info(Object.keys(github.context.payload.pull_request || {}).join(', '))
+    core.info(JSON.stringify(github.context.payload.pull_request, undefined, 2))
+    core.info('---')
+
+    const currentSubmittedReviewers: string[] = []
+    core.info(`Submitted Reviewers: ${currentRequestedReviewers.join(' ')}`)
 
     // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
     const teamMembers: string[][] = await Promise.all(
-      currentlyRequestedTeams
+      currentRequestedTeams
         .filter(team => teamSlugsToExpand.includes(team))
         .map(async team => {
           const members = await orgReadOctoKit.rest.teams.listMembersInOrg({
@@ -43,13 +51,15 @@ async function run(): Promise<void> {
     core.info(`Team Members to Add: ${expansionReviewerLogins.join(' ')}`)
 
     // PREPARE NEW REVIEWER PAYLOAD
-    const teamReviewers: string[] = currentlyRequestedTeams.filter(
+    const teamReviewers: string[] = currentRequestedTeams.filter(
       t => !teamSlugsToExpand.includes(t)
     )
     const reviewers: string[] = uniq([
-      ...currentlyRequestedReviewers,
+      ...currentRequestedReviewers,
       ...expansionReviewerLogins
-    ]).filter(login => login !== prAuthorLogin)
+    ])
+      .filter(login => login !== prAuthorLogin)
+      .filter(login => !currentSubmittedReviewers.includes(login))
     core.info(`Modified Teams: ${teamReviewers.join(' ')}`)
     core.info(`Modified Reviewers: ${reviewers.join(' ')}`)
 

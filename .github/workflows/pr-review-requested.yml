@@ -1,0 +1,19 @@
+name: PR Review Requested
+
+on:
+  repository_dispatch:
+  pull_request:
+    types: [review_requested]
+
+jobs:
+  expand-team-review-requests:
+    name: "Expand Team Review Requests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Expand Team Review Requests
+        uses: AviseInc/expand-team-review-requests@dont-rerequest-reviewers
+        with:
+          team-slugs: dummy-team
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          READ_ORG_PAT: ${{ secrets.FRANKS_READ_ORG_PAT }}
