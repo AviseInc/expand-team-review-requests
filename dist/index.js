@@ -55,6 +55,7 @@ function run() {
             if (github.context.payload.pull_request === undefined) {
                 return;
             }
+            log('AskTia: expanding teams 💪');
             // GATHER ACTION ARGUMENTS
             const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
             const octokit = github.getOctokit(GITHUB_TOKEN);
@@ -90,9 +91,7 @@ function run() {
             const currentSubmittedReviewers = [];
             log('PR already has reviews from these users:', currentSubmittedReviewers.join(', '));
             // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
-            const teamMembers = yield Promise.all(currentRequestedTeams
-                .filter(teamSlugMatches)
-                .map((team) => __awaiter(this, void 0, void 0, function* () {
+            const teamMembers = yield Promise.all(currentRequestedTeams.filter(teamSlugMatches).map((team) => __awaiter(this, void 0, void 0, function* () {
                 const members = yield orgReadOctoKit.rest.teams.listMembersInOrg({
                     org: github.context.repo.owner,
                     team_slug: team

@@ -16,6 +16,8 @@ async function run(): Promise<void> {
       return
     }
 
+    log('AskTia: expanding teams 💪')
+
     // GATHER ACTION ARGUMENTS
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ''
     const octokit = github.getOctokit(GITHUB_TOKEN)
