@@ -21,10 +21,20 @@ async function run(): Promise<void> {
     const octokit = github.getOctokit(GITHUB_TOKEN)
     const READ_ORG_PAT = process.env.READ_ORG_PAT || ''
     const orgReadOctoKit = github.getOctokit(READ_ORG_PAT)
+
     const teamSlugsToExpand = core
       .getInput('team-slugs')
       .split(',')
       .map(s => s.trim())
+    let teamSlugMatches: (team: string) => boolean
+    if (teamSlugsToExpand.includes('*')) {
+      teamSlugMatches = () => true
+    } else {
+      teamSlugMatches = (team: string) => teamSlugsToExpand.includes(team)
+    }
+
+    const teamSlugDoesNoteMatch = (team: string) => !teamSlugMatches(team)
+
     log(
       'Action is configured to expand these teams:',
       teamSlugsToExpand.join(', ')
@@ -66,15 +76,13 @@ async function run(): Promise<void> {
 
     // DETERMINE WHICH REVIEWERS NEED TO BE REQUESTED
     const teamMembers: string[][] = await Promise.all(
-      currentRequestedTeams
-        .filter(team => teamSlugsToExpand.includes(team))
-        .map(async team => {
-          const members = await orgReadOctoKit.rest.teams.listMembersInOrg({
-            org: github.context.repo.owner,
-            team_slug: team
-          })
-          return members.data.map(m => m.login)
+      currentRequestedTeams.filter(teamSlugMatches).map(async team => {
+        const members = await orgReadOctoKit.rest.teams.listMembersInOrg({
+          org: github.context.repo.owner,
+          team_slug: team
         })
+        return members.data.map(m => m.login)
+      })
     )
     const expansionReviewerLogins: string[] = uniq(flatten(teamMembers))
     log(
@@ -84,7 +92,7 @@ async function run(): Promise<void> {
 
     // PREPARE NEW REVIEWER PAYLOAD
     const teamReviewers: string[] = currentRequestedTeams.filter(
-      t => !teamSlugsToExpand.includes(t)
+      teamSlugDoesNoteMatch
     )
     const reviewers: string[] = uniq([
       ...currentRequestedReviewers,
