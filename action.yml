@@ -1,6 +1,6 @@
-name: 'Expand Team Review Requests'
+name: 'AskTia: Expand Team Review Requests'
 description: 'When whitelisted teams are assigned to review, individually assign all of their members.'
-author: 'Avise Inc.'
+author: 'Tia, Inc.'
 inputs:
   team-slugs:
     required: true
